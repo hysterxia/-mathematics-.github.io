@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Geometric Counting | Interactive Grid</title>
+<style>
+:root{--navy:#143454;--teal:#087e88;--paper:#f5f8fb;--ink:#18324c}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,sans-serif}header{background:var(--navy);color:white;padding:18px clamp(16px,6vw,70px)}header h1{margin:0;font-size:26px}header p{margin:6px 0 0;color:#e7f5fc}main{max-width:1100px;margin:22px auto;padding:0 16px;display:grid;grid-template-columns:minmax(280px,1.2fr) minmax(280px,1fr);gap:18px}.panel{background:white;border-radius:12px;padding:20px;border:1px solid #d8e0e6}svg{display:block;width:100%;max-height:500px;background:#fff;border:1px solid #d5dee7;border-radius:9px}label{font-weight:600}select,button{font-size:15px;border:1px solid #aec2cc;border-radius:8px;padding:8px 10px;background:white;color:var(--ink)}button{cursor:pointer;font-weight:600}button.primary{background:var(--teal);color:white;border-color:var(--teal)}button:focus-visible,select:focus-visible{outline:3px solid #9cdef0}.controls{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.formrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}.formrow label{display:block}.formrow select{width:100%;margin-top:5px}h2{font-size:18px;margin:0 0 12px}h3{margin:16px 0 7px;font-size:16px}.metric{display:block;margin:16px 0;padding:13px;background:#e9f4f5;border-radius:8px;font-size:23px;font-weight:800;text-align:center}.small{color:#5f7485;font-size:13px}.muted{color:#5f7485}.answer{display:none;padding:13px;background:#f2f8ee;border-left:4px solid #6a9a34;border-radius:4px;margin-top:12px}table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:7px;border-bottom:1px solid #dce5eb;text-align:left}footer{grid-column:1/-1;font-size:13px;color:#738393;padding-bottom:10px}@media(max-width:760px){main{display:block}.panel{margin-bottom:16px}}
+</style></head><body>
+<header><h1>Geometric Counting: Interactive Grid</h1><p>Count squares and rectangles by size, then by choosing boundary lines.</p></header>
+<main>
+<section class="panel"><h2>1. Build a grid</h2><div class="formrow"><label for="rows">Rows of small squares<select id="rows"></select></label><label for="cols">Columns of small squares<select id="cols"></select></label></div>
+<svg id="grid" viewBox="0 0 480 420" role="img" aria-label="Interactive rectangular grid"></svg>
+<div class="controls"><button onclick="randomRectangle()" class="primary">Highlight a random rectangle</button><button onclick="largestSquare()">Highlight largest square</button><button onclick="resetSelection()">Clear highlight</button></div>
+<p class="small">Each highlighted region is one rectangle. Dragging is not required: choose the four boundary lines below.</p>
+<h3>Choose boundaries</h3><div class="formrow"><label for="h1">Top boundary<select id="h1"></select></label><label for="h2">Bottom boundary<select id="h2"></select></label><label for="v1">Left boundary<select id="v1"></select></label><label for="v2">Right boundary<select id="v2"></select></label></div>
+<p id="selectedInfo" class="muted" aria-live="polite"></p></section>
+<section class="panel"><h2>2. Count all sizes</h2><p>Try to predict the answers before pressing Reveal.</p>
+<label for="mode">Which shapes are we counting?</label><select id="mode"><option value="square">Squares only</option><option value="rectangle">All rectangles (including squares)</option><option value="nonsquare">Rectangles that are not squares</option></select>
+<div class="metric" id="problem">Predict the total.</div><div class="controls"><button onclick="reveal()" class="primary">Reveal count and reasoning</button><button onclick="hide()">Hide answer</button></div>
+<div class="answer" id="answer"><div id="reason"></div><div id="sizes"></div></div>
+<h3>3. Challenge</h3><p>A <strong>4 × 6</strong> grid has how many rectangles of any size?</p>
+<p>There are 5 horizontal grid lines and 7 vertical grid lines.</p>
+<p>Choose two of each, multiply, then check by setting the grid dimensions to 4 rows and 6 columns.</p>
+<h3>New notation</h3><p><strong>C(5, 2)</strong> means choose 2 items from 5: <strong>5 × 4 ÷ 2 = 10</strong>.</p><p><strong>C(7, 2)</strong> means choose 2 from 7: <strong>7 × 6 ÷ 2 = 21</strong>.</p></section>
+<footer>Week 4 Counting &amp; Probability</footer>
+</main><script>
+const $=id=>document.getElementById(id); const S={rows:3,cols:3,rect:null};
+const choose2=n=>n*(n-1)/2;
+for(let v=2;v<=6;v++)for(let id of ['rows','cols']){const o=document.createElement('option');o.value=v;o.textContent=v;if(v===3)o.selected=true;$(id).appendChild(o)}
+function setupSelect(id,values,selected){const el=$(id);el.innerHTML='';values.forEach(v=>{let o=document.createElement('option');o.value=v;o.textContent='Line '+v;o.selected=v===selected;el.appendChild(o)})}
+function currentRect(){return {top:+$('h1').value,bottom:+$('h2').value,left:+$('v1').value,right:+$('v2').value}}
+function refreshOptions(){setupSelect('h1',Array.from({length:S.rows+1},(_,i)=>i),0);setupSelect('h2',Array.from({length:S.rows+1},(_,i)=>i),Math.min(2,S.rows));setupSelect('v1',Array.from({length:S.cols+1},(_,i)=>i),0);setupSelect('v2',Array.from({length:S.cols+1},(_,i)=>i),Math.min(2,S.cols))}
+function setRect(r){for(const [k,v] of Object.entries({h1:r.top,h2:r.bottom,v1:r.left,v2:r.right}))$(k).value=v;render()}
+function render(){S.rows=+$('rows').value;S.cols=+$('cols').value;const svg=$('grid');svg.innerHTML='';const unit=Math.min(66,345/S.rows,420/S.cols);const ox=(480-unit*S.cols)/2,oy=(420-unit*S.rows)/2;let r=currentRect();if(r.top>=r.bottom){let b=Math.min(S.rows,r.top+1);r.bottom=b;$('h2').value=b}if(r.left>=r.right){let rr=Math.min(S.cols,r.left+1);r.right=rr;$('v2').value=rr}
+const ns='http://www.w3.org/2000/svg';function shape(tag,attrs){let e=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));svg.appendChild(e);return e}
+shape('rect',{x:ox+r.left*unit,y:oy+r.top*unit,width:(r.right-r.left)*unit,height:(r.bottom-r.top)*unit,fill:'#b7e8e1'});
+for(let c=0;c<=S.cols;c++)shape('line',{x1:ox+c*unit,x2:ox+c*unit,y1:oy,y2:oy+S.rows*unit,stroke:'#a8b4bd','stroke-width':1.5});for(let rr=0;rr<=S.rows;rr++)shape('line',{x1:ox,x2:ox+S.cols*unit,y1:oy+rr*unit,y2:oy+rr*unit,stroke:'#a8b4bd','stroke-width':1.5});shape('rect',{x:ox+r.left*unit,y:oy+r.top*unit,width:(r.right-r.left)*unit,height:(r.bottom-r.top)*unit,fill:'none',stroke:'#087e88','stroke-width':4});$('selectedInfo').textContent=`Chosen region: ${r.bottom-r.top} row(s) × ${r.right-r.left} column(s). ${r.bottom-r.top===r.right-r.left?'This is a square.':'This rectangle is not a square.'}`;
+$('problem').textContent='Predict: how many '+$('mode').selectedOptions[0].textContent.toLowerCase()+'?';hide();}
+function randomRectangle(){const t=Math.floor(Math.random()*S.rows), b=t+1+Math.floor(Math.random()*(S.rows-t));const l=Math.floor(Math.random()*S.cols),r=l+1+Math.floor(Math.random()*(S.cols-l));setRect({top:t,bottom:b,left:l,right:r})}
+function largestSquare(){const k=Math.min(S.rows,S.cols);setRect({top:0,bottom:k,left:0,right:k})}
+function resetSelection(){setRect({top:0,bottom:1,left:0,right:1})}
+function reveal(){let sq=0;let lines='';for(let k=1;k<=Math.min(S.rows,S.cols);k++){const n=(S.rows-k+1)*(S.cols-k+1);sq+=n;lines+=`<tr><td>${k} × ${k}</td><td>${S.rows-k+1} × ${S.cols-k+1}</td><td>${n}</td></tr>`}const tot=choose2(S.rows+1)*choose2(S.cols+1);const non=tot-sq;let value=$('mode').value==='square'?sq:$('mode').value==='rectangle'?tot:non;let text=`<p><strong>${value}</strong> shapes.</p><p>Squares: ${sq}. Rectangles (including squares): C(${S.rows+1},2) × C(${S.cols+1},2) = ${tot}. Non-square rectangles: ${tot} − ${sq} = ${non}.</p>`;$('reason').innerHTML=text;$('sizes').innerHTML=`<table><thead><tr><th>Square size</th><th>Starting positions</th><th>Number</th></tr></thead><tbody>${lines}</tbody></table>`;$('answer').style.display='block';$('problem').textContent=`Answer: ${value}`}
+function hide(){$('answer').style.display='none'}
+for(let id of ['rows','cols'])$(id).addEventListener('change',()=>{S.rows=+$('rows').value;S.cols=+$('cols').value;refreshOptions();render()});for(let id of ['h1','h2','v1','v2'])$(id).addEventListener('change',render);$('mode').addEventListener('change',render);refreshOptions();render();
+</script></body></html>
